@@ -1,8 +1,11 @@
 # Active Directory NixOS container
 This is a configuration to run Active Directory from a LXC Container on NixOS.
-# Setup
+
+**!!This is currently untested!!**
+
+## Setup
 Notes on getting the container setup.
-## Initialise Container
+### Initialise Container
 
 Create, start, and connect to the container.
 
@@ -44,7 +47,7 @@ Disconnect from the container, and restart
     $ sudo lxc-stop --name ActiveDirectory
     $ sudo lxc-start --name ActiveDirectory
 
-## Fresh domain
+### Fresh domain
 Connect to the container via SSH
 
     $ ssh USERNAME@ActiveDirectory
