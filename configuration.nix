@@ -2,8 +2,6 @@
 # Set hostname and enable flakes
 
 { config, pkgs, lib, modulesPath, ... }:
-
-{
   imports =
     [
       # Include the default lxd configuration.
