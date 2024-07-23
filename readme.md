@@ -55,27 +55,24 @@ Copy the new configuration into place
     
 Switch to the new configuration
 
-    nixos-rebuild switch 
+    nixos-rebuild switch
 
-Rebuild once more to enable the flake, and lock package versions
+Exit and connect to our container via SSH
 
-    # nixos-rebuild switch --flake .
-
-Disconnect from the container, and restart
-
-    # exit
-    # exit
-    $ sudo lxc-stop --name ActiveDirectory
-    $ sudo lxc-start --name ActiveDirectory
-
-### Fresh domain
-Connect to the container via SSH
-
-    $ ssh USERNAME@ActiveDirectory
+    exit
+    
+    ssh USERNAME@ActiveDirectory
+    sudo -s
     
 Run the following commands to Initialise a fresh Domain.
  
-    $ samba-tool domain provision --use-rfc2307 --realm=Sample.Full.Domain.name --domain=WORKGROUP --server-role=dc --dns-backend=SAMBA_INTERNAL
+    samba-tool domain provision --use-rfc2307 --realm=Sample.Full.Domain.name --domain=WORKGROUP --server-role=dc --dns-backend=SAMBA_INTERNAL
+
+Start the Samba service
+
+    systemctl start samba.service
 
 Note the output from this command contains a randomised Administrator password.  Use that when prompted for the following commands.  Adjust **ad.Sample.Full.Domain.name** and **0.0.127** to match the config file.
-  
+
+    samba-tool dns zonecreate ad.Sample.Full.Domain.name 963.734.434.in-addr.arpa -U Administrator
+    samba-tool dns add ad.Sample.Full.Domain.name 963.734.434.in-addr.arpa 5 PTR ad.Sample.Full.Domain.name -U Administrator
