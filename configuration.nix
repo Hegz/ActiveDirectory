@@ -15,7 +15,7 @@ let
   
   samba = config.services.samba.package;
 
-  secrets = builtins.fromJSON (builtins.readFile "${self}/secrets/secrets.json");
+  secrets = builtins.fromJSON (builtins.readFile "/root/ActiveDirectory/secrets/secrets.json");
 
 in {
   imports =
@@ -155,12 +155,12 @@ in {
  
   users.mutableUsers = false;
   users.users.root.hashedPassword = "!";
-  users.users.${secrets.user.username} = {
+  users.users.${secrets.user.name} = {
     isNormalUser = true;
-    home = "/home/${secrets.user.username}";
+    home = "/home/${secrets.user.name}";
     description = "Administrative User";
     extraGroups = [ "wheel" ];
-    hashedPassword = ${secrets.user.hashed-password};
+    hashedPassword = "${secrets.user.hashed-password}";
   };
  
   system.stateVersion = "23.11"; # Did you read the comment?
