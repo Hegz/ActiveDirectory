@@ -11,7 +11,6 @@
   outputs = {
     self,
     nixpkgs,
-    home-manager,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -20,16 +19,19 @@
       "x86_64-linux"
     ];
     forAllSystems = nixpkgs.lib.genAttrs systems;
+
+    secrets = builtins.fromJSON (builtins.readFile "${self}/secrets/secrets.json");
+
   in {
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
     # Available through 'nixos-rebuild --flake .#hostname'
     nixosConfigurations = {
-      ActiveDirectory = nixpkgs.lib.nixosSystem {
-        specialArgs = {inherit inputs outputs;};
+      AD = nixpkgs.lib.nixosSystem {
+        specialArgs = {inherit secrets inputs outputs;};
         modules = [
           # > Our main nixos configuration file <
-          ./configuration.nix
+          ./AD.nix
         ];
       };
     };
