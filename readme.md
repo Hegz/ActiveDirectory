@@ -1,7 +1,5 @@
 # Active Directory NixOS container
-This is a configuration to run Active Directory from a LXC Container on NixOS.
-
-**!!This is currently untested!!**
+This is a configuration to run Samba Active Directory from a LXC Container on NixOS.
 
 ## Setup
 Notes on getting the container setup.
@@ -54,22 +52,22 @@ Exit, then stop/start the container & reenter
 
     exit
     exit
-    lxc-stop --name ActiveDirectory
-    lxc-start --name ActiveDirectory
-    lxc-attach --name ActiveDirectory
+    sudo lxc-stop --name ActiveDirectory
+    sudo lxc-start --name ActiveDirectory
+    sudo lxc-attach --name ActiveDirectory
 
 Edit the top of AD.nix to match your site
 
     cd /root/ActiveDirectory
     vim AD.nix
 
-Copy the new configuration into place
-    
-    cp configuration.nix /etc/nixos/
-    
-Switch to the new configuration
+add changes to local repo
 
-    nixos-rebuild switch
+    git add AD.nix
+    
+Switch to the final configuration
+
+    nixos-rebuild switch --flake .
 
 Exit and connect to our container via SSH
 
