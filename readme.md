@@ -80,11 +80,13 @@ Run the following commands to Initialise a fresh Domain.
  
     samba-tool domain provision --use-rfc2307 --realm=Sample.Full.Domain.name --domain=WORKGROUP --server-role=dc --dns-backend=SAMBA_INTERNAL
 
+The last lines of this command contain some important info about the domain.   Save this for future use.
+
 Start the Samba service
 
     systemctl start samba.service
 
-Note the output from this command contains a randomised Administrator password.  Use that when prompted for the following commands.  Adjust **ad.Sample.Full.Domain.name** and **0.0.127** to match the config file.
+Create the local DNS zone for AD to manage.
 
     samba-tool dns zonecreate ad.Sample.Full.Domain.name 963.734.434.in-addr.arpa -U Administrator
     samba-tool dns add ad.Sample.Full.Domain.name 963.734.434.in-addr.arpa 5 PTR ad.Sample.Full.Domain.name -U Administrator
