@@ -50,8 +50,17 @@ copy Stage 1 configuration into place, and rebuild
     cp configuration.nix /etc/nixos/
     nixos-rebuild switch
 
+Exit, then stop/start the container & reenter
+
+    exit
+    exit
+    lxc-stop --name ActiveDirectory
+    lxc-start --name ActiveDirectory
+    lxc-attach --name ActiveDirectory
+
 Edit the top of AD.nix to match your site
-     
+
+    cd /root/ActiveDirectory
     vim AD.nix
 
 Copy the new configuration into place
