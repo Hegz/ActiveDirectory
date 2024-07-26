@@ -45,9 +45,14 @@ Decrypt Secrets
     git-crypt unlock ../secret-key
     rm ../secret-key
 
-Edit the top of configuration.nix to match your site
+copy Stage 1 configuration into place, and rebuild
+
+    cp configuration.nix /etc/nixos/
+    nixos-rebuild switch
+
+Edit the top of AD.nix to match your site
      
-    vim configuration.nix
+    vim AD.nix
 
 Copy the new configuration into place
     
