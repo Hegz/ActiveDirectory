@@ -81,6 +81,7 @@ Run the following commands to Initialise a fresh Domain.
     samba-tool domain provision --use-rfc2307 --realm=Sample.Full.Domain.name --domain=WORKGROUP --server-role=dc --dns-backend=SAMBA_INTERNAL
 
 The last lines of this command contain some important info about the domain.   Save this for future use.
+in /root/ActiveDirectory/secrets/domain_info
 
 Start the Samba service
 
