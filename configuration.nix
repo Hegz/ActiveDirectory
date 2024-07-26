@@ -2,6 +2,7 @@
 # Set hostname and enable flakes
 
 { config, pkgs, lib, modulesPath, ... }:
+{
   imports =
     [
       # Include the default lxd configuration.
@@ -9,7 +10,7 @@
     ];
 
   networking = {
-    hostname = "AD";
+    hostName = "AD";
     dhcpcd.enable = false;
     useDHCP = false;
     useHostResolvConf = false;
