@@ -28,6 +28,12 @@
     };
   };
 
+  environment.systemPackages = with pkgs; [
+    vim
+    git
+    git-crypt
+  ];
+
   #Enable Flakes
   nix.settings.experimental-features = [ "nix-command flakes" ];
 
