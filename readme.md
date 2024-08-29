@@ -1,7 +1,5 @@
 # Active Directory NixOS container
-This is a configuration to run Active Directory from a LXC Container on NixOS.
-
-**!!This is currently untested!!**
+This is a configuration to run Samba Active Directory from a LXC Container on NixOS.
 
 ## Setup
 Notes on getting the container setup.
@@ -45,17 +43,31 @@ Decrypt Secrets
     git-crypt unlock ../secret-key
     rm ../secret-key
 
-Edit the top of configuration.nix to match your site
-     
-    vim configuration.nix
+copy Stage 1 configuration into place, and rebuild
 
-Copy the new configuration into place
-    
     cp configuration.nix /etc/nixos/
-    
-Switch to the new configuration
-
     nixos-rebuild switch
+
+Exit, then stop/start the container & reenter
+
+    exit
+    exit
+    sudo lxc-stop --name ActiveDirectory
+    sudo lxc-start --name ActiveDirectory
+    sudo lxc-attach --name ActiveDirectory
+
+Edit the top of AD.nix to match your site
+
+    cd /root/ActiveDirectory
+    vim AD.nix
+
+add changes to local repo
+
+    git add AD.nix
+    
+Switch to the final configuration
+
+    nixos-rebuild switch --flake .
 
 Exit and connect to our container via SSH
 
@@ -68,11 +80,14 @@ Run the following commands to Initialise a fresh Domain.
  
     samba-tool domain provision --use-rfc2307 --realm=Sample.Full.Domain.name --domain=WORKGROUP --server-role=dc --dns-backend=SAMBA_INTERNAL
 
+The last lines of this command contain some important info about the domain.   Save this for future use.
+in /root/ActiveDirectory/secrets/domain_info
+
 Start the Samba service
 
     systemctl start samba.service
 
-Note the output from this command contains a randomised Administrator password.  Use that when prompted for the following commands.  Adjust **ad.Sample.Full.Domain.name** and **0.0.127** to match the config file.
+Create the local DNS zone for AD to manage.
 
     samba-tool dns zonecreate ad.Sample.Full.Domain.name 963.734.434.in-addr.arpa -U Administrator
     samba-tool dns add ad.Sample.Full.Domain.name 963.734.434.in-addr.arpa 5 PTR ad.Sample.Full.Domain.name -U Administrator
