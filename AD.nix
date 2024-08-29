@@ -12,7 +12,8 @@ with lib;
   adWorkgroup = "WORKGROUP";
   adNetbiosName = "AD";
   AdContainerIp = "127.0.0.1";
-  hostServerIp = "127.0.0.2"; 
+  hostServerIp = "127.0.0.2";
+  webServerIp = "127.0.0.3";
 
   samba = config.services.samba.package;
 
@@ -98,6 +99,35 @@ in {
   networking = {
     hostName = "${adNetbiosName}";
     useDHCP = false;
+    nftables = {
+      enable = true;
+      ruleset = ''
+        table ip nat {
+          chain PREROUTING {
+            type nat hook prerouting priority dstnat; policy accept;
+            iifname "eth0" tcp dport 80 dnat to ${webServerIp}:80
+            iifname "eth0" tcp dport 443 dnat to ${webServerIp}:443
+          }
+        }
+      '';
+      };
+    nat = {
+      enable = true;
+      internalInterfaces = [ "eth0" ];
+      externalInterface = "eth0";
+      forwardPorts = [
+        {
+          sourcePort = 80;
+          proto = "tcp";
+          destination = "${webServerIp}:80";
+        }
+        {
+          sourcePort = 443;
+          proto = "tcp";
+          destination = "${webServerIp}:443";
+        }
+      ];
+    };
     interfaces.eth0.ipv4.addresses = [
       {
         address = "${AdContainerIp}";
