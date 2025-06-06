@@ -93,6 +93,25 @@ in {
   };  
  
   time.timeZone = "America/Vancouver";
+
+  #Provide NTP Services
+  services.chrony = {             
+    enable = true;       
+    extraConfig = ''
+      allow all 
+      ntpsigndsocket /var/lib/samba/ntp_signd
+    '';                                                                                                               
+    extraFlags = [ "-x" ];                                                                                            
+    servers = [ "${hostServerIp}" ];
+  };
+                                                           
+  systemd.services.chronyd = {
+    unitConfig.ConditionCapability = lib.mkForce "";
+  };   
+                                                           
+  systemd.tmpfiles.rules = [
+    "z /var/lib/samba/ntp_signd 750 root chrony"
+  ];
  
   i18n.defaultLocale = "en_CA.UTF-8";
  
