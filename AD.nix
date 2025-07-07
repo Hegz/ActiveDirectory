@@ -7,16 +7,8 @@
 with lib;
 
  let
-  # Adjust these values to suit the site.
-  adDomain = "Sample.Full.Domain.name";
-  adWorkgroup = "WORKGROUP";
-  adNetbiosName = "AD";
-  AdContainerIp = "127.0.0.1";
-  hostServerIp = "127.0.0.2";
-  webServerIp = "127.0.0.3";
-
+  siteConfig = import ./SiteConfig.nix;
   samba = config.services.samba.package;
-
 in {
   imports =
     [
@@ -30,8 +22,8 @@ in {
   environment.etc = {
     "resolv.conf" = {
       text = ''
-        search ${adDomain}
-        nameserver ${AdContainerIp}
+        search ${siteConfig.adDomain}
+        nameserver ${siteConfig.AdContainerIp}
       '';
     };
   };
@@ -64,51 +56,52 @@ in {
     };
     unitConfig.RequiresMountsFor = "/var/lib/samba";
   };
- 
+  
+  # Enable Samba service and setup for Active Directory Domain Controller.
   services.samba = {
     enable = true;
-    enableNmbd = false;
-    enableWinbindd = false;
+    nmbd.enable = false;
+    winbindd.enable = false;
     openFirewall = true;
-    configText = ''
-      # Global parameters
-      [global]
-          dns forwarder = ${hostServerIp}
-          netbios name = ${adNetbiosName}
-          realm = ${toUpper adDomain}
-          server role = active directory domain controller
-          workgroup = ${adWorkgroup}
-          idmap_ldb:use rfc2307 = yes
-          dns update command = ${samba}/sbin/samba_dnsupdate --use-samba-tool
-          log level = 1 
+    settings = {
+      global = {
+        "dns forwarder" = "${siteConfig.hostServerIp}";
+        "netbios name" = "${siteConfig.adNetbiosName}";
+        realm = "${toUpper siteConfig.adDomain}";
+        "server role" = "active directory domain controller";
+        workgroup = "${siteConfig.adWorkgroup}";
+        "idmap_ldb:use rfc2307" = "yes";
+        "dns update command" = "${samba}/sbin/samba_dnsupdate --use-samba-tool";
+        "log level" = 1;
+      };
+      sysvol = { 
+          path = "/var/lib/samba/sysvol";
+          "read only" = "No";
+      };
+      netlogon = {
+          path = "/var/lib/samba/sysvol/${siteConfig.adDomain}/scripts";
+          "read only" = "No";
+      };
+    };
+  };    
  
-      [sysvol]
-          path = /var/lib/samba/sysvol
-          read only = No
- 
-      [netlogon]
-          path = /var/lib/samba/sysvol/${adDomain}/scripts
-          read only = No
-    '';
-  };  
- 
+  # Setup timezone and chrony for NTP synchronization.
   time.timeZone = "America/Vancouver";
 
-  #Provide NTP Services
-  services.chrony = {             
-    enable = true;       
+  services.chrony = {
+    enable = true;
     extraConfig = ''
-      allow all 
+      allow all
       ntpsigndsocket /var/lib/samba/ntp_signd
-    '';                                                                                                               
-    extraFlags = [ "-x" ];                                                                                            
-    servers = [ "${hostServerIp}" ];
+    '';
+    extraFlags = [ "-x" ];
+    servers = [ "${siteConfig.hostServerIp}" ];
   };
-                                                           
+
   systemd.services.chronyd = {
     unitConfig.ConditionCapability = lib.mkForce "";
-  };   
-                                                           
+  };
+
   systemd.tmpfiles.rules = [
     "z /var/lib/samba/ntp_signd 750 root chrony"
   ];
@@ -116,16 +109,15 @@ in {
   i18n.defaultLocale = "en_CA.UTF-8";
  
   networking = {
-    hostName = "${adNetbiosName}";
-    useDHCP = false;
+  # nftables and networking section are to provide access to the school web server.
     nftables = {
       enable = true;
       ruleset = ''
         table ip nat {
           chain PREROUTING {
             type nat hook prerouting priority dstnat; policy accept;
-            iifname "eth0" tcp dport 80 dnat to ${webServerIp}:80
-            iifname "eth0" tcp dport 443 dnat to ${webServerIp}:443
+            iifname "eth0" tcp dport 80 dnat to ${siteConfig.webServerIp}:80
+            iifname "eth0" tcp dport 443 dnat to ${siteConfig.webServerIp}:443
           }
         }
       '';
@@ -138,29 +130,31 @@ in {
         {
           sourcePort = 80;
           proto = "tcp";
-          destination = "${webServerIp}:80";
+          destination = "${siteConfig.webServerIp}:80";
         }
         {
           sourcePort = 443;
           proto = "tcp";
-          destination = "${webServerIp}:443";
+          destination = "${siteConfig.webServerIp}:443";
         }
       ];
     };
+    hostName = "${siteConfig.adNetbiosName}";
+    useDHCP = false;
     interfaces.eth0.ipv4.addresses = [
       {
-        address = "${AdContainerIp}";
+        address = "${siteConfig.AdContainerIp}";
         prefixLength = 16;
       }];
     defaultGateway = {
-      address = "${hostServerIp}";
+      address = "${siteConfig.hostServerIp}";
       interface = "eth0";
     };
     firewall = {
       enable = true;
       allowedTCPPorts = [ 53 88 135 389 464 636 3268 3269 ];
       allowedTCPPortRanges = [ {from = 49152; to = 65535;} ];
-      allowedUDPPorts = [ 53 88 137 138 389 464];
+      allowedUDPPorts = [ 53 88 123 137 138 389 464];
       allowPing = true;
     }; 
   };
@@ -172,20 +166,7 @@ in {
     git
     git-crypt
   ];
- 
-  # Enable system auto upgrade
-  system.autoUpgrade = { 
-    enable = true;
-    dates = "Tue *-*8..14"; # Patch Tuesday!
-    allowReboot = true;
-    flake = "github:hegz/ActiveDirectory";
-    flags = [ "--update-input" "nixpkgs" "--commit-lock-file" ];
-    rebootWindow = {
-      lower = "00:00";
-      upper = "02:00";
-    };
-  };  
- 
+
   # enable automatic GC
   nix = { 
     gc = { 
