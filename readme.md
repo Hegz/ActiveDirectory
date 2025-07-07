@@ -7,7 +7,7 @@ Notes on getting the container setup.
 
 Create the container, start it and collect the generated MAC address
 
-    sudo lxc-create --name ActiveDirectory --template download -- --dist nixos --release 24.05 --arch amd64
+    sudo lxc-create --name ActiveDirectory --template download -- --dist nixos --release 25.05 --arch amd64
     sudo lxc-start --name ActiveDirectory --foreground
     ...
     ip addr
