@@ -59,11 +59,11 @@ Exit, then stop/start the container & reenter
 Edit the top of AD.nix to match your site
 
     cd /root/ActiveDirectory
-    vim AD.nix
+    vim SiteConfig.nix
 
 add changes to local repo
 
-    git add AD.nix
+    git add SiteConfig.nix
     
 Switch to the final configuration
 
