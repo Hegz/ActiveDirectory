@@ -1,22 +1,24 @@
 # Edit this configuration file to define what should be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
- 
-{ config, secrets, pkgs, lib, modulesPath, ... }:
-
-with lib;
-
- let
+{
+  config,
+  secrets,
+  pkgs,
+  lib,
+  modulesPath,
+  ...
+}:
+with lib; let
   siteConfig = import ./SiteConfig.nix;
   samba = config.services.samba.package;
 in {
-  imports =
-    [
-      # Include the default lxd configuration.
-      "${modulesPath}/virtualisation/lxc-container.nix"
-      ./hardware-configuration.nix
-    ];
- 
+  imports = [
+    # Include the default lxd configuration.
+    "${modulesPath}/virtualisation/lxc-container.nix"
+    ./hardware-configuration.nix
+  ];
+
   # Disable resolveconf, we're using Samba internal DNS backend
   systemd.services.resolvconf.enable = false;
   environment.etc = {
@@ -27,25 +29,27 @@ in {
       '';
     };
   };
- 
+
   # Rebuild Samba with LDAP, MDNS and Domain Controller support
-  nixpkgs.overlays = [ (self: super: {
-    samba = (super.samba.override {
-      enableLDAP = true;
-      enableMDNS = true;
-      enableDomainController = true;
-      enableProfiling = true; 
-    });
-  })];
- 
+  nixpkgs.overlays = [
+    (self: super: {
+      samba = super.samba.override {
+        enableLDAP = true;
+        enableMDNS = true;
+        enableDomainController = true;
+        enableProfiling = true;
+      };
+    })
+  ];
+
   # Disable default Samba `smbd` service, we will be using the `samba` server binary
-  systemd.services.samba-smbd.enable = false;  
+  systemd.services.samba-smbd.enable = false;
   systemd.services.samba = {
     description = "Samba Service Daemon";
- 
-    requiredBy = [ "samba.target" ];
-    partOf = [ "samba.target" ];
- 
+
+    requiredBy = ["samba.target"];
+    partOf = ["samba.target"];
+
     serviceConfig = {
       ExecStart = "${samba}/sbin/samba --foreground --no-process-group";
       ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
@@ -56,7 +60,7 @@ in {
     };
     unitConfig.RequiresMountsFor = "/var/lib/samba";
   };
-  
+
   # Enable Samba service and setup for Active Directory Domain Controller.
   services.samba = {
     enable = true;
@@ -74,17 +78,17 @@ in {
         "dns update command" = "${samba}/sbin/samba_dnsupdate --use-samba-tool";
         "log level" = 1;
       };
-      sysvol = { 
-          path = "/var/lib/samba/sysvol";
-          "read only" = "No";
+      sysvol = {
+        path = "/var/lib/samba/sysvol";
+        "read only" = "No";
       };
       netlogon = {
-          path = "/var/lib/samba/sysvol/${siteConfig.adDomain}/scripts";
-          "read only" = "No";
+        path = "/var/lib/samba/sysvol/${siteConfig.adDomain}/scripts";
+        "read only" = "No";
       };
     };
-  };    
- 
+  };
+
   # Setup timezone and chrony for NTP synchronization.
   time.timeZone = "America/Vancouver";
 
@@ -94,8 +98,8 @@ in {
       allow all
       ntpsigndsocket /var/lib/samba/ntp_signd
     '';
-    extraFlags = [ "-x" ];
-    servers = [ "${siteConfig.hostServerIp}" ];
+    extraFlags = ["-x"];
+    servers = ["${siteConfig.hostServerIp}"];
   };
 
   systemd.services.chronyd = {
@@ -105,11 +109,11 @@ in {
   systemd.tmpfiles.rules = [
     "z /var/lib/samba/ntp_signd 750 root chrony"
   ];
- 
+
   i18n.defaultLocale = "en_CA.UTF-8";
- 
+
   networking = {
-  # nftables and networking section are to provide access to the school web server.
+    # nftables and networking section are to provide access to the school web server.
     nftables = {
       enable = true;
       ruleset = ''
@@ -121,10 +125,10 @@ in {
           }
         }
       '';
-      };
+    };
     nat = {
       enable = true;
-      internalInterfaces = [ "eth0" ];
+      internalInterfaces = ["eth0"];
       externalInterface = "eth0";
       forwardPorts = [
         {
@@ -145,22 +149,29 @@ in {
       {
         address = "${siteConfig.AdContainerIp}";
         prefixLength = 16;
-      }];
+      }
+    ];
     defaultGateway = {
       address = "${siteConfig.hostServerIp}";
       interface = "eth0";
     };
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 53 88 135 389 464 636 3268 3269 ];
-      allowedTCPPortRanges = [ {from = 49152; to = 65535;} ];
-      allowedUDPPorts = [ 53 88 123 137 138 389 464];
+      allowedTCPPorts = [53 88 135 389 464 636 3268 3269];
+      allowedTCPPortRanges = [
+        {
+          from = 49152;
+          to = 65535;
+        }
+      ];
+      allowedUDPPorts = [53 88 123 137 138 389 464];
       allowPing = true;
-    }; 
+    };
+    resolvconf.enable = false;
   };
- 
+
   services.openssh.enable = true;
- 
+
   environment.systemPackages = with pkgs; [
     vim
     git
@@ -168,30 +179,30 @@ in {
   ];
 
   # enable automatic GC
-  nix = { 
-    gc = { 
+  nix = {
+    gc = {
       automatic = true;
       dates = "Tue *-*8..14 2:00:00";
       options = "--delete-older-than 7d";
-    };  
+    };
     optimise = {
       automatic = true;
-      dates = [ "Tue *-*8..14 3:00:00" ];
+      dates = ["Tue *-*8..14 3:00:00"];
     };
-    settings = { 
-      experimental-features = [ "nix-command" "flakes" ];
+    settings = {
+      experimental-features = ["nix-command" "flakes"];
     };
-  };  
- 
+  };
+
   users.mutableUsers = false;
   users.users.root.hashedPassword = "!";
   users.users.${secrets.user.name} = {
     isNormalUser = true;
     home = "/home/${secrets.user.name}";
     description = "Administrative User";
-    extraGroups = [ "wheel" ];
+    extraGroups = ["wheel"];
     hashedPassword = "${secrets.user.hashed-password}";
   };
- 
+
   system.stateVersion = "23.11"; # Did you read the comment?
 }
