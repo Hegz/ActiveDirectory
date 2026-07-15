@@ -1,10 +1,9 @@
 # Flake configuration
-
 {
   description = "Systems configuration flake";
-  
+
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
@@ -21,7 +20,6 @@
     forAllSystems = nixpkgs.lib.genAttrs systems;
 
     secrets = builtins.fromJSON (builtins.readFile "${self}/secrets/secrets.json");
-
   in {
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
